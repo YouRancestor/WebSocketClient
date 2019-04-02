@@ -1,4 +1,5 @@
 ﻿#include "WebSocketClientImplCurl.h"
+#include <string.h>
 #include <thread>
 #include <cstdlib>
 #include <ctime>

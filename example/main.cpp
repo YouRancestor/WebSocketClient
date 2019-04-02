@@ -1,7 +1,8 @@
 ﻿#include "WebSocketClientImplCurl.h"
+#include <string.h>
 #include <thread>
 
-static const char* msg = "Hello!";
+static const char* message = "Hello!";
 using namespace ws;
 
 class MyWsClient : public WebSocketClientImplCurl
@@ -28,7 +29,7 @@ void MyWsClient::OnConnect(ConnectResult result)
 {
     if (result == ws::WebSocketClientImplCurl::Success)
     {
-        Message msg(ws::Text, msg, strlen(msg));
+        Message msg(ws::Text, message, strlen(message));
 
         Send(msg);
 
