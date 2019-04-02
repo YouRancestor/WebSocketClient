@@ -6,9 +6,6 @@ from tornado.web import Application
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
-    def __init__(self, application, request, **kwargs):
-        super(WSHandler, self).__init__(application, request, **kwargs)
-
     def open(self):
         self.write_message("Hello")
         print('new connection!')
@@ -20,9 +17,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         print ("closed")
 
 class HTTPHandler(tornado.web.RequestHandler):
-    def __init__(self, application, request, **kwargs):
-        super(HTTPHandler, self).__init__(application, request, **kwargs)
-
     def get(self):
         pass
 

@@ -1,4 +1,6 @@
 ﻿#include "WebSocketClientImplCurl.h"
+#include <thread>
+
 static const char* msg = "Hello!";
 using namespace ws;
 
@@ -12,11 +14,13 @@ int main(int argc, char *argv[])
 {
     MyWsClient cl;
     cl.Connect("http://127.0.0.1:8000/ws", 0);
-    
-    while (true)
-    {
-        Sleep(1000);
-    }
+
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+
+	cl.Close();
+
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+
     return 0;
 }
 
@@ -37,5 +41,5 @@ void MyWsClient::OnConnect(ConnectResult result)
 
 void MyWsClient::OnRecv(Message msg, bool fin)
 {
-    printf("receive message: %s\n",msg.data);
+    printf("receive message(type %d): %s\n", msg.type, msg.data);
 }
