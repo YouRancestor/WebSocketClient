@@ -1,5 +1,5 @@
 ﻿#include "WebSocketClientImplCurl.h"
-static const char* msg = "Hello!\n";
+static const char* msg = "Hello!";
 using namespace ws;
 
 class MyWsClient : public WebSocketClientImplCurl
