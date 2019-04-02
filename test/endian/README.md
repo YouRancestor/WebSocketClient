@@ -1,0 +1,2 @@
+# EndianTest
+Compile main.cpp into a excutable file and excute it in teminal, then check return value(e.g. `echo $?` on Linux or `echo %errorlevel%` on Windows), 1 represents Big-Endian and 0 represents Little-Endian.
