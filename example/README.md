@@ -21,7 +21,7 @@
 
 ### Server (python is required)
 
-- Install tornado 5.0.2 package. (other version may un)
+- Install tornado 5.0.2 package. (other version may be incompatible)
 
 ```sh
   $ pip install tornado==5.0.2
