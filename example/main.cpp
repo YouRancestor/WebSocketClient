@@ -11,10 +11,16 @@ class MyWsClient : public WebSocketClientImplCurl
     virtual void OnRecv(Message msg, bool fin) override;
 };
 
+static const char g_url[] = "http://127.0.0.1:8000/ws";
+
 int main(int argc, char *argv[])
 {
     MyWsClient cl;
-    cl.Connect("http://127.0.0.1:8000/ws", 0);
+
+	char * url = new char[sizeof(g_url)];
+	memcpy(url, g_url, sizeof(g_url));
+    cl.Connect(url, 0);
+	delete [] url;
 
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 

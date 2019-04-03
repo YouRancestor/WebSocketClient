@@ -140,10 +140,10 @@ WebSocketClientImplCurl::~WebSocketClientImplCurl()
     curl_easy_cleanup(m_curl);
 }
 
-void WebSocketClientImplCurl::Connect(const char * url, int timeout)
+void WebSocketClientImplCurl::Connect(const char * url, long timeout)
 {
     curl_easy_setopt(m_curl, CURLOPT_URL, url);
-    
+    curl_easy_setopt(m_curl, CURLOPT_TIMEOUT_MS, timeout);
     std::thread th_conn(ConnProc, this);
     th_conn.detach();
 }
