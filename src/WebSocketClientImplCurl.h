@@ -41,6 +41,17 @@ namespace ws {
     {
     public:
         WebSocketClientImplCurl(); // Using default headers
+
+        /**
+         * @brief WebSocketClientImplCurl
+         * @param customHeader array for customize HTTP header, one array item represents one line in HTTP
+         * header, including the request line
+         * @param nlines @em customHeader array size
+         * @note This funcion copies the header strings @em customHeader specified.
+         *
+         * For example the default header array is defined as follows.
+         * @snippet WebSocketClientImplCurl.cpp default HTTP header
+         */
         WebSocketClientImplCurl(const char** customHeader, int nlines);
         virtual ~WebSocketClientImplCurl();
         enum ConnectResult
@@ -49,11 +60,32 @@ namespace ws {
             Timeout = 1,
             Reject = 2
         };
-        void Connect(const char* url, int timeout);
-        virtual void OnConnect(ConnectResult result);
-        void Close();
-        virtual void OnClose();
 
+        /**
+         * @brief Connect to websocket server.
+         * @param url the websocket server url
+         * @param timeout in milliseconds, setting to 0 means it never times out during transfer
+         * @note This function is non-blocking, it starts a thread to establish the connection and returns immediately. \n
+         * The @em url string will be saved as a copy, you can release it after this function returns.
+         */
+        void Connect(const char* url, long timeout);
+
+        /**
+         * @brief On connect
+         * @param result the connection result
+         *
+         * This function will be invoked when the connection process is finished, both in success and failure
+         * cases.
+         */
+        virtual void OnConnect(ConnectResult result);
+
+        /**
+         * @brief Close the websocket connection.
+         *
+         * Send a message which @em FrameType is @em Close to server.
+         * If the connection @em State is not @em Connected, this function will do nothing.
+         */
+        void Close();
 
         enum State
         {
@@ -62,11 +94,33 @@ namespace ws {
             Connected,
         };
 
+        /**
+         * @brief Get the client's conntion state.
+         * @return current conntion state
+         */
         State GetState();
 
+		/**
+         * @brief Send message to server.
+         * @param msg the message to send
+		 */
         int Send(Message msg);
+
+        /**
+         * @brief On receive
+         * @param msg received message
+         * @param fin if this data frame is a last frame
+         *
+         * This function will be invoked when receives a message from server.
+         * @note @em msg will be invalid after this function returns, save @em msg.data as a copy if needed.
+         */
         virtual void OnRecv(Message msg, bool fin);
 
+    protected:
+        /**
+         * @brief Get the status code of HTTP response
+         * @return state code
+         */
         long GetResponseCode();
 
     private:

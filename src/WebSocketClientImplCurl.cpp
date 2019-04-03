@@ -81,7 +81,7 @@ static void WsMask(char* data, uint64_t len, const char mask_key[4])
     }
 }
 
-
+//! [default HTTP header]
 static const char *defaultHeaders[] = {
     "HTTP/1.1 101 WebSocket Protocol Handshake",
     "Upgrade: WebSocket",
@@ -89,6 +89,7 @@ static const char *defaultHeaders[] = {
     "Sec-WebSocket-Version: 13",
     "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
 };
+//! [default HTTP header]
 
 WebSocketClientImplCurl::WebSocketClientImplCurl()
     : WebSocketClientImplCurl(defaultHeaders, sizeof(defaultHeaders) / sizeof(char *))
@@ -157,11 +158,6 @@ void WebSocketClientImplCurl::Close()
     Message msg(ws::Close, NULL, 0);
     Send(msg);
 }
-
-void WebSocketClientImplCurl::OnClose()
-{
-}
-
 
 inline WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
 {
@@ -395,6 +391,7 @@ size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_
     }
     
     Message msg(frame_type, tmp, payloadlen);
+    // TODO: parse the reserved bits
     pthis->OnRecv(msg, fin);
     return datalen;
 }
@@ -419,7 +416,7 @@ void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
     }
     else
     {
-        pthis->OnClose();
+        pthis->OnConnect(Reject);
     }
 }
 
