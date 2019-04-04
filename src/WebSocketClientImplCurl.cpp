@@ -223,8 +223,14 @@ int WebSocketClientImplCurl::Send(Message msg)
     mask mask_key;
     uint64_t bufflen = sizeof(WsHeader) + extendedBtyes + sizeof(mask_key) + msg.len;
     char* buff = (char*)malloc(bufflen);
+#ifdef _MSC_VER
+#pragma warning( push )
 #pragma warning(disable: 4302)
+#endif
     mask_key.integer = (int32_t)buff+1;  // get a random integer
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
     if (!buff)
         throw "Not enough memory: data is too large.";
     char* temp = buff;
