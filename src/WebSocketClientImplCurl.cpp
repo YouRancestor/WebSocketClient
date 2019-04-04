@@ -1,7 +1,6 @@
 ﻿#include "WebSocketClientImplCurl.h"
 #include <string.h>
 #include <thread>
-#include <cstdlib>
 #include <ctime>
 using namespace ws;
 
@@ -103,9 +102,6 @@ WebSocketClientImplCurl::WebSocketClientImplCurl(const char ** customHeader, int
     , m_sockfd(0)
     , m_state(WebSocketClientImplCurl::Disconnected)
 {
-    // Init random seed for masking key
-    std::srand(std::time(nullptr));
-    std::rand();
     // Init curl
     m_curl = curl_easy_init();
     if (!m_curl)
