@@ -100,10 +100,10 @@ namespace ws {
          */
         State GetState();
 
-		/**
+        /**
          * @brief Send message to server.
          * @param msg the message to send
-		 */
+         */
         int Send(Message msg);
 
         /**
