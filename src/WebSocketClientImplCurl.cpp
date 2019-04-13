@@ -4,7 +4,7 @@
 #include <ctime>
 using namespace ws;
 
-struct WsHeaderLittleEdian
+struct WsHeaderLittleEndian
 {
     uint8_t opcode : 4;
     uint8_t rsv3 : 1;
@@ -15,7 +15,7 @@ struct WsHeaderLittleEdian
     uint8_t payloadlen : 7;
     uint8_t masked : 1;
 };
-struct WsHeaderBigEdian
+struct WsHeaderBigEndian
 {
     uint8_t fin : 1;
     uint8_t rsv1 : 1;
@@ -29,8 +29,8 @@ struct WsHeaderBigEdian
 
 union WsHeader
 {
-    WsHeaderLittleEdian little;
-    WsHeaderBigEdian big;
+    WsHeaderLittleEndian little;
+    WsHeaderBigEndian big;
 };
 
 union Endian
@@ -160,6 +160,29 @@ inline WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
     return m_state;
 }
 
+#define FILL_WS_HEADER(endian) \
+        header.endian.fin = true; \
+        header.endian.opcode = msg.type; \
+        if (!(header.endian.opcode & 0x80)) \
+        { \
+            /* Non-control frame */ \
+            header.endian.masked = true; /* Client must mask data */\
+            if (msg.len <= 125ULL) \
+            { \
+                header.endian.payloadlen = msg.len; \
+            } \
+            else if (msg.len <= 0xFFFFULL) \
+            { \
+                header.endian.payloadlen = 126; \
+                extendedBtyes = 2; \
+            } \
+            else \
+            { \
+                header.endian.payloadlen = 127; \
+                extendedBtyes = 8; \
+            } \
+        }
+
 int WebSocketClientImplCurl::Send(Message msg)
 {
     if(GetState() != Connected)
@@ -171,52 +194,11 @@ int WebSocketClientImplCurl::Send(Message msg)
     uint32_t extendedBtyes = 0;
     if (HostIsBigEdian())
     {
-        header.big.fin = true;
-        header.big.opcode = msg.type;
-        if (!(header.big.opcode & 0x80))
-        {
-            // Non-control frame
-            header.big.masked = true; // Client must mask data
-            if (msg.len <= 125ULL)
-            {
-                header.big.payloadlen = msg.len;
-            }
-            else if (msg.len <= 0xFFFFULL)
-            {
-                header.big.payloadlen = 126;
-                extendedBtyes = 2;
-            }
-            else
-            {
-                header.big.payloadlen = 127;
-                extendedBtyes = 8;
-            }
-        }
+        FILL_WS_HEADER(big)
     }
     else
     {
-        header.little.fin = true;
-        header.little.opcode = msg.type;
-        if (!(header.little.opcode & 0x80))
-        {
-            // Non-control frame
-            header.little.masked = true; // Client must mask data
-            if (msg.len <= 125ULL)
-            {
-                header.little.payloadlen = msg.len;
-            }
-            else if (msg.len <= 0xFFFFULL)
-            {
-                header.little.payloadlen = 126;
-                extendedBtyes = 2;
-            }
-            else
-            {
-                header.little.payloadlen = 127;
-                extendedBtyes = 8;
-            }
-        }
-
+        FILL_WS_HEADER(little)
     }
 
 
@@ -314,6 +296,35 @@ size_t WebSocketClientImplCurl::OnHeaderReceived(char * buffer, size_t size, siz
     return n;
 }
 
+#define PARSE_WS_HEADER(endian) \
+        payloadlen = header.endian.payloadlen; \
+ \
+        if (header.endian.payloadlen == 126) \
+        { \
+            u_short *len = (u_short *)tmp; \
+            payloadlen = net_to_host(*len); /* net order to host order */\
+            tmp += 2; \
+        } \
+        else if (header.endian.payloadlen == 127) \
+        { \
+            uint64_t *len = (uint64_t *)tmp; \
+            payloadlen = net_to_host(*len); /* net order to host order */\
+            tmp += 8; \
+        } \
+ \
+        if (header.endian.masked) \
+        { \
+            /* Get mask key */\
+            mask mask_key; \
+            memcpy(&mask_key, tmp, 4); \
+            tmp += 4; \
+ \
+            /* Unmask data */\
+            WsMask(tmp, payloadlen, mask_key.chararr); \
+ \
+        } \
+        frame_type = (FrameType)header.endian.opcode; \
+        fin = (bool)header.endian.fin;
 
 size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_t nmemb, void * userdata)
 {
@@ -331,65 +342,11 @@ size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_
 
     if (HostIsBigEdian())
     {
-        payloadlen = header.big.payloadlen;
-
-        if (header.big.payloadlen == 126)
-        {
-            u_short *len = (u_short *)tmp;
-            payloadlen = net_to_host(*len); // net order to host order
-            tmp += 2;
-        }
-        else if (header.big.payloadlen == 127)
-        {
-            uint64_t *len = (uint64_t *)tmp;
-            payloadlen = net_to_host(*len); // net order to host order
-            tmp += 8;
-        }
-
-        if (header.big.masked)
-        {
-            // Get mask key
-            mask mask_key;
-            memcpy(&mask_key, tmp, 4);
-            tmp += 4;
-
-            // Unmask data
-            WsMask(tmp, payloadlen, mask_key.chararr);
-
-        }
-        frame_type = (FrameType)header.big.opcode;
-        fin = (bool)header.big.fin;
+        PARSE_WS_HEADER(big)
     }
     else
     {
-        payloadlen = header.little.payloadlen;
-
-        if (header.little.payloadlen == 126)
-        {
-            u_short *len = (u_short *)tmp;
-            payloadlen = net_to_host(*len); // net order to host order
-            tmp += 2;
-        }
-        else if (header.little.payloadlen == 127)
-        {
-            uint64_t *len = (uint64_t *)tmp;
-            payloadlen = net_to_host(*len); // net order to host order
-            tmp += 8;
-        }
-
-        if (header.little.masked)
-        {
-            // Get mask key
-            mask mask_key;
-            memcpy(&mask_key, tmp, 4);
-            tmp += 4;
-
-            // Unmask data
-            WsMask(tmp, payloadlen, mask_key.chararr);
-
-        }
-        frame_type = (FrameType)header.little.opcode;
-        fin = (bool)header.little.fin;
+        PARSE_WS_HEADER(little)
     }
     
     Message msg(frame_type, tmp, payloadlen);
@@ -412,7 +369,10 @@ void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
     pthis->SetState(Connecting);
     CURLcode ret = curl_easy_perform(pthis->m_curl);
     pthis->SetState(Disconnected);
-    if (ret == CURLE_COULDNT_CONNECT)
+	if (ret == CURLE_OK)
+	{
+	}
+    else if (ret == CURLE_COULDNT_CONNECT)
     {
         pthis->OnConnect(Timeout);
     }
