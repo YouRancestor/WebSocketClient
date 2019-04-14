@@ -137,10 +137,9 @@ WebSocketClientImplCurl::~WebSocketClientImplCurl()
     curl_easy_cleanup(m_curl);
 }
 
-void WebSocketClientImplCurl::Connect(const char * url, long timeout)
+void WebSocketClientImplCurl::Connect(const char * url)
 {
     curl_easy_setopt(m_curl, CURLOPT_URL, url);
-    curl_easy_setopt(m_curl, CURLOPT_TIMEOUT_MS, timeout);
     std::thread th_conn(ConnProc, this);
     th_conn.detach();
 }
@@ -203,7 +202,7 @@ int WebSocketClientImplCurl::Send(Message msg)
 
 
     mask mask_key;
-    uint64_t bufflen = sizeof(WsHeader) + extendedBtyes + sizeof(mask_key) + msg.len;
+    int bufflen = sizeof(WsHeader) + extendedBtyes + sizeof(mask_key) + msg.len;
     char* buff = (char*)malloc(bufflen);
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -372,7 +371,7 @@ void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
 	if (ret == CURLE_OK)
 	{
 	}
-    else if (ret == CURLE_COULDNT_CONNECT)
+    else if (ret == CURLE_COULDNT_CONNECT || ret == CURLE_OPERATION_TIMEDOUT)
     {
         pthis->OnConnect(Timeout);
     }

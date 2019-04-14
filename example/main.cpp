@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
 	char * url = new char[sizeof(g_url)];
 	memcpy(url, g_url, sizeof(g_url));
-    cl.Connect(url, 0);
+    cl.Connect(url);
 	delete [] url;
 
 	std::this_thread::sleep_for(std::chrono::seconds(1));

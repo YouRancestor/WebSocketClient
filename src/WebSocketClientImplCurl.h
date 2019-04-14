@@ -30,10 +30,10 @@ namespace ws {
 
     struct Message
     {
-        Message(FrameType type, const char* data, uint64_t len) :type(type), data(data), len(len) {}
+        Message(FrameType type, const char* data, int len) :type(type), data(data), len(len) {}
         FrameType type;
         const char* data;
-        uint64_t len; // size of data in bytes
+        int len; // size of data in bytes
     };
 
 
@@ -64,11 +64,10 @@ namespace ws {
         /**
          * @brief Connect to websocket server.
          * @param url the websocket server url
-         * @param timeout in milliseconds, setting to 0 means it never times out during transfer
          * @note This function is non-blocking, it starts a thread to establish the connection and returns immediately. \n
          * The @em url string will be saved as a copy, you can release it after this function returns.
          */
-        void Connect(const char* url, long timeout);
+        void Connect(const char* url);
 
         /**
          * @brief On connect
