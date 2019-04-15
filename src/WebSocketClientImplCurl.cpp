@@ -1,4 +1,40 @@
-﻿#include "WebSocketClientImplCurl.h"
+﻿
+/*                 The WebSocket Protocol
+The WebSocket Protocol enables two-way communication between a client
+running untrusted code in a controlled environment to a remote host
+that has opted-in to communications from that code.  The security
+model used for this is the origin-based security model commonly used
+by web browsers.  The protocol consists of an opening handshake
+followed by basic message framing, layered over TCP.  The goal of
+this technology is to provide a mechanism for browser-based
+applications that need two-way communication with servers that does
+not rely on opening multiple HTTP connections (e.g., using
+XMLHttpRequest or <iframe>s and long polling).
+
+Standard:
+https://tools.ietf.org/html/rfc6455
+
+Frame:
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-------+-+-------------+-------------------------------+
+|F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+|I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+|N|V|V|V|       |S|             |   (if payload len==126/127)   |
+| |1|2|3|       |K|             |                               |
++-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+|     Extended payload length continued, if payload len == 127  |
++ - - - - - - - - - - - - - - - +-------------------------------+
+|                               |Masking-key, if MASK set to 1  |
++-------------------------------+-------------------------------+
+| Masking-key (continued)       |          Payload Data         |
++-------------------------------- - - - - - - - - - - - - - - - +
+:                     Payload Data continued ...                :
++ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+|                     Payload Data continued ...                |
++---------------------------------------------------------------+
+*/
+#include "WebSocketClientImplCurl.h"
 #include <string.h>
 #include <thread>
 #include <ctime>
