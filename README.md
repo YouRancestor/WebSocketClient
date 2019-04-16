@@ -10,4 +10,4 @@ Note: also link Ws2_32.lib on Windows.
 ## Dependencies
 
 - [libcurl](https://curl.haxx.se) (required) [download releases](https://curl.haxx.se/download.html)
-- [openssl](https://www.openssl.org) (if needed, depending on your curl library)
+- [openssl](https://www.openssl.org) (if needed, depending on your curl library) [Windows releases](https://curl.haxx.se/windows/)
