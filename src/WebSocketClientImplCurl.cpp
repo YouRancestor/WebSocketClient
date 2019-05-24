@@ -198,7 +198,7 @@ inline WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
 #define FILL_WS_HEADER(endian) \
         header.endian.fin = true; \
         header.endian.opcode = msg.type; \
-        if (!(header.endian.opcode & 0x80)) \
+        if (header.endian.opcode & 0x7) \
         { \
             /* Non-control frame */ \
             header.endian.masked = true; /* Client must mask data */\
