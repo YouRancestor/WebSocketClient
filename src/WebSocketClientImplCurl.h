@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <curl/curl.h>
 #include <stdint.h>
+#include <string>
+
 namespace ws {
 
     enum FrameType
@@ -137,6 +139,8 @@ namespace ws {
         curl_socket_t m_sockfd;   // send message to server through this fd
 
         State m_state;    // connection state
+
+        std::string buffer;
     };
 
 }

@@ -75,7 +75,7 @@ union Endian
     char c[sizeof(uint16_t)];
 };
 static Endian un = { 0x0102 };
-static bool HostIsBigEdian() {
+static bool HostIsBigEndian() {
     if (un.c[0] == 1)
         return true;
     else
@@ -86,7 +86,7 @@ static bool HostIsBigEdian() {
 template <class T>
 static T net_to_host(T num)
 {
-    if (HostIsBigEdian())
+    if (HostIsBigEndian())
         return num;
     else
     {
@@ -227,7 +227,7 @@ int WebSocketClientImplCurl::Send(Message msg)
     memset(&header, 0, sizeof(WsHeader));
 
     uint32_t extendedBtyes = 0;
-    if (HostIsBigEdian())
+    if (HostIsBigEndian())
     {
         FILL_WS_HEADER(big)
     }
@@ -339,20 +339,24 @@ size_t WebSocketClientImplCurl::OnHeaderReceived(char * buffer, size_t size, siz
             u_short *len = (u_short *)tmp; \
             payloadlen = net_to_host(*len); /* net order to host order */\
             tmp += 2; \
+            remaining -= 2; \
         } \
         else if (header.endian.payloadlen == 127) \
         { \
             uint64_t *len = (uint64_t *)tmp; \
             payloadlen = net_to_host(*len); /* net order to host order */\
             tmp += 8; \
-        } \
- \
+            remaining -= 8; \
+        }
+
+#define UNMASK_PAYLOAD(endian) \
         if (header.endian.masked) \
         { \
             /* Get mask key */\
             mask mask_key; \
             memcpy(&mask_key, tmp, 4); \
             tmp += 4; \
+            remaining -= 4; \
  \
             /* Unmask data */\
             WsMask(tmp, payloadlen, mask_key.chararr); \
@@ -361,32 +365,62 @@ size_t WebSocketClientImplCurl::OnHeaderReceived(char * buffer, size_t size, siz
         frame_type = (FrameType)header.endian.opcode; \
         fin = (bool)header.endian.fin;
 
+
 size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_t nmemb, void * userdata)
 {
     WebSocketClientImplCurl *pthis = (WebSocketClientImplCurl *)userdata;
     size_t datalen = size * nmemb;
+    pthis->buffer.append(ptr, datalen);
 
-    char * tmp = ptr;
+    char * tmp = &pthis->buffer[0];
+    size_t remaining = pthis->buffer.size();
 
-    WsHeader header;
-    memcpy(&header, ptr, 2);
-    tmp += 2;
-    uint64_t payloadlen = 0;
-    FrameType frame_type = Text;
-    bool fin = true;
-
-    if (HostIsBigEdian())
+    while (remaining)
     {
-        PARSE_WS_HEADER(big)
+        char *start = tmp;
+        size_t len = remaining;
+
+        WsHeader header;
+        memcpy(&header, tmp, 2);
+        tmp += 2;
+        remaining -= 2;
+
+        uint64_t payloadlen = 0;
+        FrameType frame_type = Text;
+        bool fin = true;
+
+        bool endian = HostIsBigEndian();
+        if (endian)
+        {
+            PARSE_WS_HEADER(big)
+        }
+        else
+        {
+            PARSE_WS_HEADER(little)
+        }
+
+        if (payloadlen > remaining)
+        {
+            pthis->buffer = std::string(start, len);
+            return datalen;
+        }
+
+        if (endian)
+        {
+            UNMASK_PAYLOAD(big)
+        }
+        else
+        {
+            UNMASK_PAYLOAD(little)
+        }
+
+        Message msg(frame_type, tmp, payloadlen);
+        // TODO: parse the reserved bits
+        pthis->OnRecv(msg, fin);
+        tmp += payloadlen;
+        remaining -= payloadlen;
     }
-    else
-    {
-        PARSE_WS_HEADER(little)
-    }
-    
-    Message msg(frame_type, tmp, payloadlen);
-    // TODO: parse the reserved bits
-    pthis->OnRecv(msg, fin);
+    pthis->buffer.clear();
     return datalen;
 }
 
