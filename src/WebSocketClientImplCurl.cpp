@@ -331,34 +331,46 @@ size_t WebSocketClientImplCurl::OnHeaderReceived(char * buffer, size_t size, siz
     return n;
 }
 
+#define CHECK_REMAINING(size) \
+        if(remaining < size) \
+        { \
+            pthis->buffer = std::string(start, len); \
+            return datalen; \
+        }
+
+#define MOVE_FORWARD(size) \
+        tmp += size; \
+        remaining -= size;
+
 #define PARSE_WS_HEADER(endian) \
         payloadlen = header.endian.payloadlen; \
  \
         if (header.endian.payloadlen == 126) \
         { \
+            CHECK_REMAINING(2) \
             u_short *len = (u_short *)tmp; \
             payloadlen = net_to_host(*len); /* net order to host order */\
-            tmp += 2; \
-            remaining -= 2; \
+            MOVE_FORWARD(2) \
         } \
         else if (header.endian.payloadlen == 127) \
         { \
+            CHECK_REMAINING(8) \
             uint64_t *len = (uint64_t *)tmp; \
             payloadlen = net_to_host(*len); /* net order to host order */\
-            tmp += 8; \
-            remaining -= 8; \
+            MOVE_FORWARD(8) \
         }
 
 #define UNMASK_PAYLOAD(endian) \
         if (header.endian.masked) \
         { \
             /* Get mask key */\
+            CHECK_REMAINING(4) \
             mask mask_key; \
             memcpy(&mask_key, tmp, 4); \
-            tmp += 4; \
-            remaining -= 4; \
+            MOVE_FORWARD(4) \
  \
             /* Unmask data */\
+            CHECK_REMAINING(payloadlen) \
             WsMask(tmp, payloadlen, mask_key.chararr); \
  \
         } \
@@ -380,10 +392,10 @@ size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_
         char *start = tmp;
         size_t len = remaining;
 
+        CHECK_REMAINING(2)
         WsHeader header;
         memcpy(&header, tmp, 2);
-        tmp += 2;
-        remaining -= 2;
+        MOVE_FORWARD(2)
 
         uint64_t payloadlen = 0;
         FrameType frame_type = Text;
@@ -399,12 +411,6 @@ size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_
             PARSE_WS_HEADER(little)
         }
 
-        if (payloadlen > remaining)
-        {
-            pthis->buffer = std::string(start, len);
-            return datalen;
-        }
-
         if (endian)
         {
             UNMASK_PAYLOAD(big)
@@ -414,11 +420,11 @@ size_t WebSocketClientImplCurl::OnMessageReceived(char * ptr, size_t size, size_
             UNMASK_PAYLOAD(little)
         }
 
+        CHECK_REMAINING(payloadlen)
         Message msg(frame_type, tmp, payloadlen);
         // TODO: parse the reserved bits
         pthis->OnRecv(msg, fin);
-        tmp += payloadlen;
-        remaining -= payloadlen;
+        MOVE_FORWARD(payloadlen)
     }
     pthis->buffer.clear();
     return datalen;
