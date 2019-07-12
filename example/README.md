@@ -10,7 +10,7 @@
   $ sudo apt install libcurl4-openssl-dev  # install libcurl
 ```
 
-- Compile main.cpp with files under src/ into a excutable file.
+- Compile main.cpp with files under src/ into an excutable file.
 
 #### Linux
 
