@@ -190,7 +190,7 @@ void WebSocketClientImplCurl::Close()
     Send(msg);
 }
 
-inline WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
+WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
 {
     return m_state;
 }
