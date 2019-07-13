@@ -17,16 +17,16 @@ int main(int argc, char *argv[])
 {
     MyWsClient cl;
 
-	char * url = new char[sizeof(g_url)];
-	memcpy(url, g_url, sizeof(g_url));
+    char * url = new char[sizeof(g_url)];
+    memcpy(url, g_url, sizeof(g_url));
     cl.Connect(url);
-	delete [] url;
+    delete [] url;
 
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-	cl.Close();
+    cl.Close();
 
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     return 0;
 }

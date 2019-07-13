@@ -444,9 +444,9 @@ void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
     pthis->SetState(Connecting);
     CURLcode ret = curl_easy_perform(pthis->m_curl);
     pthis->SetState(Disconnected);
-	if (ret == CURLE_OK)
-	{
-	}
+    if (ret == CURLE_OK)
+    {
+    }
     else if (ret == CURLE_COULDNT_CONNECT || ret == CURLE_OPERATION_TIMEDOUT)
     {
         pthis->OnConnect(Timeout);
