@@ -169,15 +169,19 @@ WebSocketClientImplCurl::WebSocketClientImplCurl(const char ** customHeader, int
 
 WebSocketClientImplCurl::~WebSocketClientImplCurl()
 {
+    Close();
+    std::lock_guard<std::mutex> guard(m_mtx);
     curl_slist_free_all(m_header_list_ptr);
     curl_easy_cleanup(m_curl);
+    if(m_th_conn.joinable())
+        m_th_conn.join();
 }
 
 void WebSocketClientImplCurl::Connect(const char * url)
 {
     curl_easy_setopt(m_curl, CURLOPT_URL, url);
-    std::thread th_conn(ConnProc, this);
-    th_conn.detach();
+    if (m_th_conn.joinable()) m_th_conn.detach();
+    m_th_conn = std::thread(ConnProc, this);
 }
 
 void WebSocketClientImplCurl::OnConnect(ConnectResult result)
@@ -439,6 +443,7 @@ void WebSocketClientImplCurl::RecvProc(void * userdata)
 
 void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
 {
+    std::lock_guard<std::mutex> guard(pthis->m_mtx);
     if (pthis->GetState() != Disconnected)
         return;
     pthis->SetState(Connecting);

@@ -2,6 +2,8 @@
 #include <curl/curl.h>
 #include <stdint.h>
 #include <string>
+#include <thread>
+#include <mutex>
 
 namespace ws {
 
@@ -141,6 +143,8 @@ namespace ws {
         State m_state;    // connection state
 
         std::string buffer;
+        std::thread m_th_conn;
+        std::mutex m_mtx;
     };
 
 }

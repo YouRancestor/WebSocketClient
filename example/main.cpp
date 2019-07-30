@@ -22,11 +22,11 @@ int main(int argc, char *argv[])
     cl.Connect(url);
 	delete [] url;
 
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 
 	cl.Close();
 
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+	//std::this_thread::sleep_for(std::chrono::seconds(5));
 
     return 0;
 }
@@ -43,6 +43,7 @@ void MyWsClient::OnConnect(ConnectResult result)
     else
     {
         printf("Websocket connect failed.\n");
+        Connect(g_url);
     }
 }
 
