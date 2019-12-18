@@ -119,7 +119,7 @@ static void WsMask(char* data, uint64_t len, const char mask_key[4])
 //! [default HTTP header]
 static const char *defaultHeaders[] = {
     "HTTP/1.1 101 WebSocket Protocol Handshake",
-    "Upgrade: WebSocket",
+    "Upgrade: websocket",
     "Connection: Upgrade",
     "Sec-WebSocket-Version: 13",
     "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
