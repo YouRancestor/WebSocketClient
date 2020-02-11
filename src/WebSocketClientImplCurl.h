@@ -104,8 +104,18 @@ namespace ws {
         /**
          * @brief Send message to server.
          * @param msg the message to send
+         * @return Remaining bytes to be sent, 0 means the hole message was sent, -1 means failure.
+         * This function won't block. If this function returns a positive value, please call @em SendRemaining()
+         * or this function again and again until it returns 0 or -1. The em msg will be buffed, you don't have
+         * to pass it again. Before finish sending last message, new messages won't be sent.
          */
         int Send(Message msg);
+
+        /**
+         * @brief Send the remaining part of the last message.
+         * @return same as @em Send()
+         */
+        int SendRemaining();
 
         /**
          * @brief On receive
@@ -141,6 +151,12 @@ namespace ws {
         State m_state;    // connection state
 
         std::string buffer;
+
+        char* sendbuff;
+        int sendbufflen;
+        int sendoffset;
+
+        void ClearSendBuff();
     };
 
 }

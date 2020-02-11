@@ -137,6 +137,9 @@ WebSocketClientImplCurl::WebSocketClientImplCurl(const char ** customHeader, int
     , m_header_list_ptr(NULL)
     , m_sockfd(0)
     , m_state(WebSocketClientImplCurl::Disconnected)
+    , sendbuff(NULL)
+    , sendbufflen(0)
+    , sendoffset(0)
 {
     // Init curl
     m_curl = curl_easy_init();
@@ -220,6 +223,11 @@ WebSocketClientImplCurl::State WebSocketClientImplCurl::GetState()
 
 int WebSocketClientImplCurl::Send(Message msg)
 {
+    if (sendbufflen > sendoffset)
+    {
+        return SendRemaining();
+    }
+
     if(GetState() != Connected)
         return -1;
     WsHeader header;
@@ -238,8 +246,9 @@ int WebSocketClientImplCurl::Send(Message msg)
 
 
     mask mask_key;
-    int bufflen = sizeof(WsHeader) + extendedBtyes + sizeof(mask_key) + msg.len;
-    char* buff = (char*)malloc(bufflen);
+    int bufflen = sendbufflen = sizeof(WsHeader) + extendedBtyes + sizeof(mask_key) + msg.len;
+    char* buff = sendbuff =(char*)malloc(bufflen);
+
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning(disable: 4302)
@@ -286,8 +295,43 @@ int WebSocketClientImplCurl::Send(Message msg)
 
     int n = send(this->m_sockfd, buff, bufflen, 0);
 
-    free(buff);
-    return n;
+    if (n<0)
+    {
+        ClearSendBuff();
+        return -1;
+    }
+
+    if (n < bufflen)
+    {
+        sendoffset += n;
+        return sendbufflen - sendoffset;
+    }
+
+    ClearSendBuff();
+    return 0;
+}
+
+int ws::WebSocketClientImplCurl::SendRemaining()
+{
+    if (sendbufflen > sendoffset)
+    {
+        int n = send(this->m_sockfd, this->sendbuff, sendoffset, sendbufflen - sendoffset);
+        if (n < 0)
+        {
+            ClearSendBuff();
+            return -1;
+        }
+        sendoffset += n;
+        if (sendbufflen > sendoffset)
+        {
+            return sendbufflen - sendoffset;
+        }
+        else
+        {
+            ClearSendBuff();
+        }
+    }
+    return 0;
 }
 
 void WebSocketClientImplCurl::OnRecv(Message msg, bool fin)
@@ -461,4 +505,15 @@ void WebSocketClientImplCurl::ConnProc(WebSocketClientImplCurl* pthis)
 inline void WebSocketClientImplCurl::SetState(State newState)
 {
     m_state = newState;
+}
+
+void ws::WebSocketClientImplCurl::ClearSendBuff()
+{
+    if (sendbuff)
+    {
+        free(sendbuff);
+        sendbuff = nullptr;
+        sendbufflen = 0;
+        sendoffset = 0;
+    }
 }
