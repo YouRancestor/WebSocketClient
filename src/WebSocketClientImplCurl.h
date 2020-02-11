@@ -107,7 +107,7 @@ namespace ws {
          * @return Remaining bytes to be sent, 0 means the hole message was sent, -1 means failure.
          * This function won't block. If this function returns a positive value, please call @em SendRemaining()
          * or this function again and again until it returns 0 or -1. The em msg will be buffed, you don't have
-         * to pass it again. Before finish sending last message, new messages won't be sent.
+         * to pass it again. Before finish sending the last message, new messages won't be sent.
          */
         int Send(Message msg);
 

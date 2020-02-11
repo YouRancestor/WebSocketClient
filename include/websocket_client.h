@@ -115,8 +115,11 @@ WEBSOCKET_CLIENT_API void websocket_client_connect_server(websocket_client_t* cl
  * @brief send message to server
  * @param client websocket client instance
  * @param msg the message to send
- * @return the total number of bytes sent
+ * @return Remaining bytes to be sent, 0 means the hole message was sent, -1 means failure.
  * @note You should make sure the connection has established or the message will not be sent.
+ * This function won't block. If this function returns a positive value, please call this function again and again 
+ * until it returns 0 or -1. The em msg will be buffed, you don't have to pass it again. Before finish sending the
+ * last message, new messages won't be sent.
  */
 WEBSOCKET_CLIENT_API int websocket_client_send_sessage(websocket_client_t* client, websocket_message_t msg);
 
